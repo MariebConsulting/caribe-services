@@ -190,19 +190,23 @@
 <p class="contact-lead">Text is our preferred way to connect. Send us a message at (260) 222-6166 or share your project details below.</p>
 <a aria-label="Text Caribe Services at 260-222-6166" class="btn btn-accent contact-main-sms" href="sms:+12602226166?body=Hi%20Caribe%20Services%2C%20I%27d%20like%20to%20talk%20about%20a%20backyard%20project.">Send a text <span aria-hidden="true">↗</span></a>
 <p class="sms-note">Prefer to call? <a href="tel:+12602226166">(260) 222-6166</a></p>
-<form class="mini-form" id="quote-form">
-<h3>Or have us contact you</h3>
+<form class="mini-form" id="quote-form" action="https://formsubmit.co/hello@caribeservices.com" method="POST">
+<h3>Send us an inquiry</h3>
+<input type="hidden" name="_subject" value="New Caribe Services website inquiry"/>
+<input type="hidden" name="_template" value="table"/>
+<input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none"/>
 <div class="mini-fields">
-<label>Your name <input autocomplete="name" maxlength="100" name="name" placeholder="Name" required=""/></label>
-<label>Phone or email <input maxlength="180" name="contact" placeholder="Number or email address" required=""/></label>
-<label>How should we reply?
-              <select name="preference" required=""><option disabled="" selected="" value="">Choose one</option><option>Text</option><option>Call</option><option>Email</option></select>
+<label>Name <input autocomplete="name" maxlength="100" name="name" placeholder="Your name" required/></label>
+<label>Email <input autocomplete="email" type="email" maxlength="180" name="email" placeholder="you@example.com" required/></label>
+<label>Phone <input autocomplete="tel" type="tel" maxlength="35" name="phone" placeholder="(260) 555-0123" required/></label>
+<label>Preferred method of contact
+<select name="preferred_contact" required><option disabled selected value="">Choose one</option><option value="Text">Text</option><option value="Phone call">Phone call</option><option value="Email">Email</option></select>
 </label>
-<label>What's the project? <textarea maxlength="1200" name="details" placeholder="Trampoline, fire pit, walkway…" required="" rows="2"></textarea></label>
+<label>Question or project details (optional) <textarea maxlength="1200" name="message" placeholder="What can we help you with?" rows="3"></textarea></label>
 </div>
-<button class="btn btn-light mini-submit" type="submit">Prepare request <span aria-hidden="true">↗</span></button>
-<p class="mini-disclosure">Opens an email draft for you to review and send. A direct-submit form can be connected at launch.</p>
-<div aria-live="polite" class="form-feedback" hidden="" id="form-feedback" role="status"><span>If your email app didn't open, copy your request:</span> <button id="copy-request" type="button">Copy request</button></div>
+<button class="btn btn-light mini-submit" type="submit">Send inquiry <span aria-hidden="true">↗</span></button>
+<p class="mini-disclosure">Your information is used only to respond to your inquiry.</p>
+<div aria-live="polite" class="form-feedback" hidden id="form-feedback" role="status"></div>
 </form>
 </div>
 </section>
@@ -260,53 +264,35 @@ document.querySelectorAll('[data-service]').forEach(button => button.addEventLis
 }));
 
 const form = document.querySelector('#quote-form');
-let latestMessage = '';
-form?.addEventListener('submit', event => {
+form?.addEventListener('submit', async event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
+  const button = form.querySelector('[type="submit"]');
+  const feedback = document.querySelector('#form-feedback');
   const data = new FormData(form);
-  const value = key => String(data.get(key) ?? '').trim();
-  const contact = value('contact');
-  const preference = value('preference');
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
-  const isPhone = /^[+()\d\s.\-]{7,}$/.test(contact) && contact.replace(/\D/g, '').length >= 7;
-  if ((preference === 'Email' && !isEmail) || (preference !== 'Email' && !isPhone)) {
-    const contactField = form.querySelector('[name="contact"]');
-    contactField.setCustomValidity(preference === 'Email' ? 'Please enter an email address.' : 'Please enter a phone number for calls or texts.');
-    contactField.reportValidity();
-    contactField.addEventListener('input', () => contactField.setCustomValidity(''), {once:true});
-    return;
-  }
-  latestMessage = [
-    'Hello Caribe Services,', '',
-    'I would like to discuss a backyard project.', '',
-    `Name: ${value('name')}`, `Contact: ${contact}`,
-    `Preferred reply method: ${preference}`, '',
-    'Project:', value('details'), '',
-    'Sent from the Caribe Services website.'
-  ].join('\n');
-  const subject = `Backyard project inquiry — ${value('name')}`;
-  const emailUrl = `mailto:hello@caribeservices.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(latestMessage)}`;
-  document.querySelector('#form-feedback').hidden = false;
-  window.location.href = emailUrl;
-});
-
-document.querySelector('#copy-request')?.addEventListener('click', async event => {
-  if (!latestMessage) return;
+  if (data.get('_honey')) return;
+  button.disabled = true;
+  button.textContent = 'Sending…';
+  feedback.hidden = true;
   try {
-    await navigator.clipboard.writeText(latestMessage);
-    event.currentTarget.textContent = 'Copied to clipboard ✓';
-  } catch {
-    const text = document.createElement('textarea');
-    text.value = latestMessage;
-    text.setAttribute('readonly', '');
-    text.style.position = 'absolute';
-    text.style.left = '-9999px';
-    document.body.appendChild(text);
-    text.select();
-    const copied = document.execCommand('copy');
-    text.remove();
-    event.currentTarget.textContent = copied ? 'Copied to clipboard ✓' : 'Copy failed — please email us directly';
+    const response = await fetch('https://formsubmit.co/ajax/hello@caribeservices.com', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: data
+    });
+    const result = await response.json();
+    if (!response.ok || result.success === false || result.success === 'false') {
+      throw new Error(result.message || 'Submission failed');
+    }
+    form.reset();
+    feedback.textContent = 'Inquiry submitted. Thank you! We’ll be in touch.';
+    feedback.hidden = false;
+  } catch (error) {
+    feedback.textContent = 'We could not send your inquiry. Please text us at (260) 222-6166 instead.';
+    feedback.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Send inquiry ↗';
   }
 });
 
