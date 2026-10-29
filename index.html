@@ -282,7 +282,7 @@ document.querySelector('#quote-form')?.addEventListener('submit', event => {
   ];
   const url = 'mailto:mariano@caribe-services.com?subject=' +
     encodeURIComponent('New Caribe Services inquiry') +
-    '&body=' + encodeURIComponent(lines.join('\\n'));
+    '&body=' + encodeURIComponent(lines.join('\n'));
   window.location.href = url;
 });
 
