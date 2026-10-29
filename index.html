@@ -263,6 +263,29 @@ document.querySelectorAll('[data-service]').forEach(button => button.addEventLis
   field.focus({ preventScroll: true });
 }));
 
+document.querySelector('#quote-form')?.addEventListener('submit', event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const data = new FormData(form);
+  const val = key => String(data.get(key) || '').trim();
+  const lines = [
+    'Caribe Services website inquiry',
+    '',
+    'Name: ' + val('name'),
+    'Email: ' + val('email'),
+    'Phone: ' + val('phone'),
+    'Preferred contact: ' + val('preferred_contact'),
+    '',
+    'Question / project details:',
+    val('message') || '(Not provided)'
+  ];
+  const url = 'mailto:mariano@caribe-services.com?subject=' +
+    encodeURIComponent('New Caribe Services inquiry') +
+    '&body=' + encodeURIComponent(lines.join('\\n'));
+  window.location.href = url;
+});
+
 document.querySelector('#copyright-year').textContent = String(new Date().getFullYear());
 </script>
 <!-- Sidewalk tile: licensed Pexels reference photograph; all other primary service/gallery photos are supplied project photography. -->
