@@ -190,10 +190,10 @@
 <p class="contact-lead">Text is our preferred way to connect. Send us a message at (260) 222-6166 or share your project details below.</p>
 <a aria-label="Text Caribe Services at 260-222-6166" class="btn btn-accent contact-main-sms" href="sms:+12602226166">Send a text <span aria-hidden="true">↗</span></a>
 <p class="sms-note">Prefer to call? <a href="tel:+12602226166">(260) 222-6166</a></p>
-<form class="mini-form" id="quote-form" action="mailto:mariano@caribe-services.com" method="POST" enctype="text/plain">
+<form class="mini-form" id="quote-form" action="https://formspree.io/f/myeedlgg" method="POST">
 <h3>Send us an inquiry</h3>
-<input type="hidden" name="_subject" value="New Caribe Services website inquiry"/>
-<input type="hidden" name="_template" value="table"/>
+<input type="hidden" name="subject" value="New Caribe Services website inquiry"/>
+
 <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none"/>
 <div class="mini-fields">
 <label>Name <input autocomplete="name" maxlength="100" name="name" placeholder="Your name" required/></label>
@@ -204,8 +204,8 @@
 </label>
 <label>Question or project details (optional) <textarea maxlength="1200" name="message" placeholder="What can we help you with?" rows="3"></textarea></label>
 </div>
-<button class="btn btn-light mini-submit" type="submit">Email inquiry <span aria-hidden="true">↗</span></button>
-<p class="mini-disclosure">Opens your email app with the inquiry details. Direct online submissions will be restored when the new form service is connected.</p>
+<button class="btn btn-light mini-submit" type="submit">Send inquiry <span aria-hidden="true">↗</span></button>
+<p class="mini-disclosure">Your information is used only to respond to your inquiry.</p>
 <div aria-live="polite" class="form-feedback" hidden id="form-feedback" role="status"></div>
 </form>
 </div>
@@ -263,27 +263,42 @@ document.querySelectorAll('[data-service]').forEach(button => button.addEventLis
   field.focus({ preventScroll: true });
 }));
 
-document.querySelector('#quote-form')?.addEventListener('submit', event => {
+const inquiryForm = document.querySelector('#quote-form');
+inquiryForm?.addEventListener('submit', async event => {
   event.preventDefault();
-  const form = event.currentTarget;
-  if (!form.reportValidity()) return;
-  const data = new FormData(form);
-  const val = key => String(data.get(key) || '').trim();
-  const lines = [
-    'Caribe Services website inquiry',
-    '',
-    'Name: ' + val('name'),
-    'Email: ' + val('email'),
-    'Phone: ' + val('phone'),
-    'Preferred contact: ' + val('preferred_contact'),
-    '',
-    'Question / project details:',
-    val('message') || '(Not provided)'
-  ];
-  const url = 'mailto:mariano@caribe-services.com?subject=' +
-    encodeURIComponent('New Caribe Services inquiry') +
-    '&body=' + encodeURIComponent(lines.join('\n'));
-  window.location.href = url;
+  if (!inquiryForm.reportValidity()) return;
+  const button = inquiryForm.querySelector('[type="submit"]');
+  const feedback = inquiryForm.querySelector('#form-feedback');
+  const originalLabel = button.innerHTML;
+  const data = new FormData(inquiryForm);
+  if (data.get('_honey')) return;
+  button.disabled = true;
+  button.textContent = 'Sending…';
+  feedback.hidden = true;
+  feedback.textContent = '';
+  try {
+    const response = await fetch(inquiryForm.action, {
+      method: 'POST',
+      body: data,
+      headers: { Accept: 'application/json' }
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      const message = Array.isArray(result.errors)
+        ? result.errors.map(item => item.message).join(' ')
+        : 'Submission was not accepted.';
+      throw new Error(message);
+    }
+    inquiryForm.reset();
+    feedback.textContent = 'Thanks! Your inquiry was sent. We’ll be in touch.';
+    feedback.hidden = false;
+  } catch (error) {
+    feedback.textContent = 'We could not send your inquiry. Please try again or text (260) 222-6166.';
+    feedback.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalLabel;
+  }
 });
 
 document.querySelector('#copyright-year').textContent = String(new Date().getFullYear());
