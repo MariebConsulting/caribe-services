@@ -194,7 +194,6 @@
 <h3>Send us an inquiry</h3>
 <input type="hidden" name="subject" value="New Caribe Services website inquiry"/>
 
-<input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none"/>
 <div class="mini-fields">
 <label>Name <input autocomplete="name" maxlength="100" name="name" placeholder="Your name" required/></label>
 <label>Email <input autocomplete="email" type="email" maxlength="180" name="email" placeholder="you@example.com" required/></label>
@@ -271,7 +270,6 @@ inquiryForm?.addEventListener('submit', async event => {
   const feedback = inquiryForm.querySelector('#form-feedback');
   const originalLabel = button.innerHTML;
   const data = new FormData(inquiryForm);
-  if (data.get('_honey')) return;
   button.disabled = true;
   button.textContent = 'Sending…';
   feedback.hidden = true;
